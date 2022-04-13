@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
 var handler http.Handler
 var srv *http.Server
+var wg sync.WaitGroup = sync.WaitGroup{}
 
 func Start(port int) bool {
 
@@ -28,8 +30,11 @@ func Start(port int) bool {
 		IdleTimeout:  12 * time.Second,
 		Handler:      handler,
 	}
+
+	wg.Add(1)
 	go func() {
-		log.Fatal(srv.ListenAndServe())
+		fmt.Println(srv.ListenAndServe())
+		wg.Done()
 	}()
 	return true
 }
@@ -51,9 +56,13 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func Stop() {
+
+	// stop the webserver if exists, by waiting for the goroutine to exit
 	if srv != nil {
 		log.Printf("Stopping webserver")
 		srv.Close()
+		wg.Wait()
+		srv = nil
 	}
 }
 
