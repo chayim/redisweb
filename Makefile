@@ -6,7 +6,7 @@ PROGROOT=redisweb
 all: clean ${DISTDIR}/${PROGROOT}.so
 
 deps/redismodule.h:
-	@mkdir deps
+	@mkdir -p deps
 	@wget -q -O $@ https://raw.githubusercontent.com/redis/redis/unstable/src/redismodule.h
 
 ${DISTDIR}/${PROGROOT}_go.a: c_bridge.go
@@ -21,6 +21,9 @@ ${DISTDIR}/${PROGROOT}.o: ${PROGROOT}.c ${DISTDIR}/${PROGROOT}_go.h deps/redismo
 
 ${DISTDIR}/${PROGROOT}.so: ${DISTDIR}/${PROGROOT}_go.a ${DISTDIR}/${PROGROOT}.o
 	gcc -w -shared -Bsymbolic -lc -lffi -nostdlib -o $@ -Wl,--whole-archive $?
+ifndef RELEASE
+	strip $@
+endif
 
 clean:
 	rm -rf ${DISTDIR}
